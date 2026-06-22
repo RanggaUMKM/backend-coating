@@ -69,7 +69,7 @@ app.get('/api/admin/bookings', async (req, res) => {
 app.post('/api/admin/update', async (req, res) => {
     try {
         const { id, status } = req.body;
-        const { data, error } = await supabase.from('bookings').update({ status_pesanan: status }).eq('id', id);
+        const { data, error } = await supabase.from('bookings').update({ status: status }).eq('id', id);
         if (error) throw error;
         res.status(200).json({ message: "Status Berhasil Diupdate!" });
     } catch (error) {

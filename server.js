@@ -50,21 +50,20 @@ app.get('/api/admin/bookings', async (req, res) => {
 });
 
 // ==========================================
-// 4. JALUR UPDATE STATUS (TANGAN BESI BOS)
 // ==========================================
-app.post('/api/admin/update', async (req, res) => {
+// 5. JALUR HAPUS PESANAN (TANGAN BESI BOS)
+// ==========================================
+app.post('/api/admin/delete', async (req, res) => {
     try {
-        const { id, status } = req.body;
+        const { id } = req.body;
         
-        // PENTING BOS: Kalo di Supabase nama kolom lu "status_pesanan", 
-        // ubah tulisan { status: status } di bawah ini jadi { status_pesanan: status }
         const { data, error } = await supabase
             .from('bookings')
-            .update({ status: status }) 
+            .delete()
             .eq('id', id);
 
         if (error) throw error;
-        res.status(200).json({ message: "Status Berhasil Diupdate!" });
+        res.status(200).json({ message: "Pesanan Berhasil Dihapus!" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

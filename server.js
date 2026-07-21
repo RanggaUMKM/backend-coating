@@ -1,95 +1,55 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// Buka gerbang CORS pakai jalur resmi
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
+// CORS wajib diaktifin biar InfinityFree (frontend) lu diizinin ngakses Vercel (backend)
+app.use(cors());
 app.use(express.json());
 
-// Panggil kunci Supabase
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+// Konek ke Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// =======================================================
-// 1. JALUR TERIMA PESANAN (SISTEM LOCK 1 HARI 1 MOBIL)
-// =======================================================
-app.post('/api/booking', async (req, res) => {
-    try {
-        // CEK DULU APAKAH TANGGAL INI UDAH ADA YANG BOOKING DI DATABASE
-        const { data: cekTanggal, error: errCek } = await supabase
-            .from('bookings')
-            .select('id')
-            .eq('tanggal', req.body.tanggal);
-
-        if (errCek) throw errCek;
-
-        // KALAU ADA DATA DI TANGGAL ITU, TOLAK MENTAH-MENTAH!
-        if (cekTanggal && cekTanggal.length > 0) {
-            return res.status(400).json({ error: "FULL" });
-        }
-
-        // KALAU KOSONG, BARU MASUKIN DATANYA KE DATABASE
-        const { data, error } = await supabase.from('bookings').insert([req.body]);
-        if (error) throw error;
-        res.status(200).json({ message: "BERHASIL!", data });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// 2. JALUR CEK STATUS (KONSUMEN)
-app.get('/api/status/:wa', async (req, res) => {
-    try {
-        const { data, error } = await supabase.from('bookings').select('*').eq('wa', req.params.wa).order('created_at', { ascending: false });
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// 3. JALUR ADMIN (BACA DATA)
+// 1. TAMPILKAN SEMUA DATA (GET)
 app.get('/api/admin/bookings', async (req, res) => {
-    try {
-        const { data, error } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
-        res.json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('id', { ascending: false }); 
+    
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
 });
 
-// 4. JALUR UPDATE STATUS (TANGAN BESI BOS)
+// 2. UPDATE STATUS PESANAN (POST)
 app.post('/api/admin/update', async (req, res) => {
-    try {
-        const { id, status } = req.body;
-        const { data, error } = await supabase.from('bookings').update({ status: status }).eq('id', id);
-        if (error) throw error;
-        res.status(200).json({ message: "Status Berhasil Diupdate!" });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    const { id, status } = req.body;
+    const { data, error } = await supabase
+        .from('bookings')
+        .update({ status_pesanan: status })
+        .eq('id', id);
+        
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true, pesan: "Status berhasil diupdate" });
 });
 
-// 5. JALUR HAPUS PESANAN
+// 3. HAPUS PESANAN (POST)
 app.post('/api/admin/delete', async (req, res) => {
-    try {
-        const { id } = req.body;
-        const { data, error } = await supabase.from('bookings').delete().eq('id', id);
-        if (error) throw error;
-        res.status(200).json({ message: "Pesanan Berhasil Dihapus!" });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+    const { id } = req.body;
+    const { error } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('id', id);
+        
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true, pesan: "Pesanan dihapus" });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Mesin V.I.P Menyala di Port ${PORT} dan Gerbang 0.0.0.0 TERBUKA!`);
-});
+// ==========================================
+// KHUSUS VERCEL: Export app (Jangan pakai app.listen)
+// ==========================================
+module.exports = app;

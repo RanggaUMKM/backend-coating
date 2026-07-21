@@ -5,7 +5,19 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// CORS paling longgar untuk semua domain
+// --- PENGAMAN CORS LAPIS BAJA ---
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    // Kalau browser lagi nanya preflight (OPTIONS), langsung setujui
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

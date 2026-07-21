@@ -1,23 +1,22 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
+// Konfigurasi CORS Express yang ramah Vercel
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
+
 app.use(express.json());
 
-// --- MANUAL HEADER CORS PAKSA (BYPASS SEMUA BLOKIR) ---
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
-    // Kalau browser kirim preflight OPTIONS, langsung setujui tanpa syarat
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    next();
-});
+// Tangani manual preflight OPTIONS agar selalu balas OK (200)
+app.options('*', cors());
 
 // Konek Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -48,6 +47,7 @@ app.post('/api/booking', async (req, res) => {
         res.status(200).json({ message: "BERHASIL!", data: data[0] });
 
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 });

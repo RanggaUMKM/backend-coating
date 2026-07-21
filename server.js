@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -17,6 +16,12 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// (Sisa rute API /booking, /status, dll di bawahnya...)
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;

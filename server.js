@@ -23,8 +23,4 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // (Sisa rute API /booking, /status, dll di bawahnya...)
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 // (Sisa rute API /booking, /status, dll biarkan seperti biasa di bawahnya...)

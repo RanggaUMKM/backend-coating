@@ -5,52 +5,37 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// --- PENGAMAN CORS LAPIS BAJA ---
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
-    // Kalau browser lagi nanya preflight (OPTIONS), langsung setujui
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
-
+// --- CORSS LEVEL KEBAL (IZIN SEMUA DOMAIN) ---
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
 
 app.use(express.json());
 
-// Konek ke Supabase Cloud (Mengambil kunci dari Environment Variables Vercel)
+// Konek Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// =======================================================
-// 1. JALUR TERIMA PESANAN (SISTEM LOCK 1 HARI 1 MOBIL)
-// =======================================================
+// 1. BOOKING API
 app.post('/api/booking', async (req, res) => {
     try {
         const { nama, wa, motor, paket, tanggal, alamat, total_harga, dp_wajib } = req.body;
 
-        // Cek apakah tanggal sudah dibooking di Supabase
         const { data: cekTanggal, error: errCek } = await supabase
             .from('bookings')
             .select('id')
             .eq('tanggal', tanggal);
 
         if (errCek) return res.status(500).json({ error: errCek.message });
-
         if (cekTanggal && cekTanggal.length > 0) {
             return res.status(400).json({ error: "FULL" });
         }
 
-        // Masukkan data baru ke Supabase
         const { data, error } = await supabase
             .from('bookings')
             .insert([{ nama, wa, motor, paket, tanggal, alamat, total_harga, dp_wajib }])
@@ -60,14 +45,11 @@ app.post('/api/booking', async (req, res) => {
         res.status(200).json({ message: "BERHASIL!", data: data[0] });
 
     } catch (error) {
-        console.error(error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// =======================================================
-// 2. JALUR AMBIL DATA ADMIN & KONSUMEN (STATUS)
-// =======================================================
+// 2. ADMIN BOOKINGS
 app.get('/api/admin/bookings', async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -82,6 +64,7 @@ app.get('/api/admin/bookings', async (req, res) => {
     }
 });
 
+// 3. STATUS KONSUMEN
 app.get('/api/status/:wa', async (req, res) => {
     const wa = req.params.wa;
     try {
@@ -97,9 +80,7 @@ app.get('/api/status/:wa', async (req, res) => {
     }
 });
 
-// =======================================================
-// 3. JALUR UPDATE STATUS
-// =======================================================
+// 4. UPDATE STATUS
 app.post('/api/admin/update', async (req, res) => {
     try {
         const { id, status } = req.body;
@@ -115,9 +96,7 @@ app.post('/api/admin/update', async (req, res) => {
     }
 });
 
-// =======================================================
-// 4. JALUR HAPUS PESANAN
-// =======================================================
+// 5. DELETE PESANAN
 app.post('/api/admin/delete', async (req, res) => {
     try {
         const { id } = req.body;
@@ -133,8 +112,4 @@ app.post('/api/admin/delete', async (req, res) => {
     }
 });
 
-// =======================================================
-// KHUSUS VERCEL SERVERLESS (Tanpa app.listen)
-// =======================================================
 module.exports = app;
-

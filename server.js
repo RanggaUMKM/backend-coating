@@ -1,20 +1,23 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-// --- CORSS LEVEL KEBAL (IZIN SEMUA DOMAIN) ---
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    credentials: true,
-    optionsSuccessStatus: 200
-}));
-
 app.use(express.json());
+
+// --- MANUAL HEADER CORS PAKSA (BYPASS SEMUA BLOKIR) ---
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    // Kalau browser kirim preflight OPTIONS, langsung setujui tanpa syarat
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
 
 // Konek Supabase
 const supabaseUrl = process.env.SUPABASE_URL;

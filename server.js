@@ -24,3 +24,5 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // (Sisa rute API /booking, /status, dll di bawahnya...)
 
 // (Sisa rute API /booking, /status, dll biarkan seperti biasa di bawahnya...)
+
+module.exports = app;

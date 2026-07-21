@@ -5,9 +5,10 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
+// CORS paling longgar untuk semua domain
 app.use(cors({
     origin: '*',
-    methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -124,3 +125,4 @@ app.post('/api/admin/delete', async (req, res) => {
 // KHUSUS VERCEL SERVERLESS (Tanpa app.listen)
 // =======================================================
 module.exports = app;
+
